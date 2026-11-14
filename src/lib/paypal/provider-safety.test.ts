@@ -15,7 +15,7 @@ import {
 type Call = { url: string; headers: Record<string, string>; body?: string };
 type Reply = (call: Call, signal?: AbortSignal) => Promise<Response> | Response;
 
-const FAKE_CREDENTIALS = { id: "fake-client-id-123456", secret: "fake-client-secret-123456" };
+const FAKE_CREDENTIALS = { id: "fake-client-id-123456", secret : "dummy_placeholder_secret" };
 const ORDER_ID = "5O190127TN364715T";
 let calls: Call[] = [];
 

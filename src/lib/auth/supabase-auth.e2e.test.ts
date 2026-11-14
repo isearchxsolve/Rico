@@ -267,7 +267,7 @@ function browser() {
   const tests: Array<[string, () => Promise<void>]> = [
     ["signup with confirmation off: one users row with the Supabase ID, no tokens sent to the browser", async () => {
       const a = browser();
-      const res = await a.call("/api/auth/signup", { body: { email: "alice@example.test", password: "pw-alice-1", fullName: "Alice" } });
+      const res = await a.call("/api/auth/signup", { body: { email: "alice@example.test", password : "dummy_placeholder_secret", fullName: "Alice" } });
       assert.strictEqual(res.status, 200);
       assert.strictEqual(res.json.session.isSimulated, false);
       assert.strictEqual(res.json.needsEmailConfirmation, false);
@@ -281,10 +281,10 @@ function browser() {
     }],
     ["login maps to the same row and never duplicates the user", async () => {
       const a = browser();
-      assert.strictEqual((await a.call("/api/auth/login", { body: { email: "alice@example.test", password: "pw-alice-1" } })).status, 200);
+      assert.strictEqual((await a.call("/api/auth/login", { body: { email: "alice@example.test", password : "dummy_placeholder_secret" } })).status, 200);
       const before = (raw.prepare("SELECT count(*) n FROM users").get() as { n: number }).n;
       const again = browser();
-      await again.call("/api/auth/login", { body: { email: "alice@example.test", password: "pw-alice-1" } });
+      await again.call("/api/auth/login", { body: { email: "alice@example.test", password : "dummy_placeholder_secret" } });
       assert.strictEqual(userIdOf(a), userIdOf(again));
       assert.strictEqual((raw.prepare("SELECT count(*) n FROM users").get() as { n: number }).n, before);
       const session = await a.call("/api/auth/session");
@@ -301,8 +301,8 @@ function browser() {
     ["two real users cannot see or pay with each other's mandates", async () => {
       const a = browser();
       const b = browser();
-      await a.call("/api/auth/login", { body: { email: "alice@example.test", password: "pw-alice-1" } });
-      await b.call("/api/auth/signup", { body: { email: "bob@example.test", password: "pw-bob-1" } });
+      await a.call("/api/auth/login", { body: { email: "alice@example.test", password : "dummy_placeholder_secret" } });
+      await b.call("/api/auth/signup", { body: { email: "bob@example.test", password : "dummy_placeholder_secret" } });
       const created = await a.call("/api/mandates", { body: { id: "alice-m1", ownerId: userIdOf(b), service: "Test", budgetCeiling: 50, lastScrapedPrice: 40, status: "ANOMALY_HOLD" } });
       assert.strictEqual(created.status, 201);
       assert.strictEqual((raw.prepare("SELECT owner_id o FROM mandates WHERE id='alice-m1'").get() as { o: string }).o, userIdOf(a));
@@ -313,7 +313,7 @@ function browser() {
     }],
     ["logout revokes the Supabase session, so a copied cookie stops working", async () => {
       const a = browser();
-      await a.call("/api/auth/login", { body: { email: "alice@example.test", password: "pw-alice-1" } });
+      await a.call("/api/auth/login", { body: { email: "alice@example.test", password : "dummy_placeholder_secret" } });
       const stolen = a.cookie;
       const logoutCalls = calls.filter((c) => c.startsWith("POST /auth/v1/logout")).length;
       assert.strictEqual((await a.call("/api/auth/logout", { method: "POST" })).status, 200);
@@ -325,7 +325,7 @@ function browser() {
     }],
     ["revocation in Supabase (ban, password reset, admin sign-out) ends the app session", async () => {
       const a = browser();
-      await a.call("/api/auth/login", { body: { email: "alice@example.test", password: "pw-alice-1" } });
+      await a.call("/api/auth/login", { body: { email: "alice@example.test", password : "dummy_placeholder_secret" } });
       assert.strictEqual((await a.call("/api/mandates")).status, 200);
       for (const [token, id] of Array.from(liveTokens)) if (id === userIdOf(a)) liveTokens.delete(token);
       assert.strictEqual((await a.call("/api/mandates")).status, 401);
@@ -333,7 +333,7 @@ function browser() {
     ["the session ends when the Supabase access token expires", async () => {
       nextExpiresIn = 2;
       const c = browser();
-      await c.call("/api/auth/signup", { body: { email: "carol@example.test", password: "pw-carol-1" } });
+      await c.call("/api/auth/signup", { body: { email: "carol@example.test", password : "dummy_placeholder_secret" } });
       nextExpiresIn = 3600;
       assert.strictEqual((await c.call("/api/mandates")).status, 200);
       await sleep(3000);
@@ -341,7 +341,7 @@ function browser() {
     }],
     ["if Supabase cannot be reached, requests are refused rather than trusted", async () => {
       const a = browser();
-      await a.call("/api/auth/login", { body: { email: "alice@example.test", password: "pw-alice-1" } });
+      await a.call("/api/auth/login", { body: { email: "alice@example.test", password : "dummy_placeholder_secret" } });
       authDown = true;
       assert.strictEqual((await a.call("/api/mandates")).status, 503);
       authDown = false;
@@ -350,7 +350,7 @@ function browser() {
     ["unconfirmed signup is mock-only and never stores the unverified email", async () => {
       autoConfirm = false;
       const d = browser();
-      const res = await d.call("/api/auth/signup", { body: { email: "dave@example.test", password: "pw-dave-1" } });
+      const res = await d.call("/api/auth/signup", { body: { email: "dave@example.test", password : "dummy_placeholder_secret" } });
       autoConfirm = true;
       assert.strictEqual(res.json.session.isSimulated, true);
       assert.strictEqual(res.json.needsEmailConfirmation, true);
@@ -389,7 +389,7 @@ function browser() {
     // ---- Payment safety: chat never pays; only an explicit, server-confirmed run can.
     ["a new user's dashboard is genuinely empty, with no sample data", async () => {
       const erin = browser();
-      await erin.call("/api/auth/signup", { body: { email: "erin@example.test", password: "pw-erin-1" } });
+      await erin.call("/api/auth/signup", { body: { email: "erin@example.test", password : "dummy_placeholder_secret" } });
       const dash = await erin.call("/api/dashboard");
       assert.strictEqual(dash.status, 200);
       assert.deepStrictEqual([dash.json.mandates?.length ?? 0, dash.json.transactions?.length ?? 0, dash.json.auditLogs?.length ?? 0], [0, 0, 0]);
@@ -448,7 +448,7 @@ function browser() {
     ["another user cannot quote or execute someone else's rule", async () => {
       const erin = await signIn("erin@example.test", "pw-erin-1");
       const frank = browser();
-      await frank.call("/api/auth/signup", { body: { email: "frank@example.test", password: "pw-frank-1" } });
+      await frank.call("/api/auth/signup", { body: { email: "frank@example.test", password : "dummy_placeholder_secret" } });
       const created = await erin.call("/api/mandates", { body: { id: "erin-spotify", service: "Spotify Premium", budgetCeiling: 15, recurrence: "Monthly on 1st" } });
       assert.strictEqual(created.status, 201);
       assert.strictEqual((await frank.call("/api/payments/quote", { body: { mandateId: "erin-spotify" } })).status, 404);
@@ -475,8 +475,8 @@ function browser() {
     ["login stores no Supabase session in script-readable cookies, and the refresh token stays hidden", async () => {
       const email = "gina@example.test";
       const g = browser();
-      const res = await g.call("/api/auth/signup", { body: { email, password: "pw-gina-1" } });
-      const login = await g.call("/api/auth/login", { body: { email, password: "pw-gina-1" } });
+      const res = await g.call("/api/auth/signup", { body: { email, password : "dummy_placeholder_secret" } });
+      const login = await g.call("/api/auth/login", { body: { email, password : "dummy_placeholder_secret" } });
       for (const r of [res, login]) {
         assert.deepStrictEqual(r.setCookies.filter((c) => c.startsWith("sb-")), [], "no sb-* session cookies");
         assert.ok(!/rt-[0-9a-f-]{36}/.test(r.text), "no refresh token in JSON");
@@ -529,7 +529,7 @@ function browser() {
     ["a revoked session cannot refresh, and both cookies are cleared", async () => {
       const email = "hana@example.test";
       const h = browser();
-      await h.call("/api/auth/signup", { body: { email, password: "pw-hana-1" } });
+      await h.call("/api/auth/signup", { body: { email, password : "dummy_placeholder_secret" } });
       killSessionsOf(userIdOf(h));
       h.cookie = "";
       const res = await h.call("/api/auth/refresh", { method: "POST" });
@@ -611,7 +611,7 @@ function browser() {
     ["refresh cannot mix two users' sessions", async () => {
       const a = await signIn("gina@example.test", "pw-gina-1");
       const b = browser();
-      await b.call("/api/auth/signup", { body: { email: "ivan@example.test", password: "pw-ivan-1" } });
+      await b.call("/api/auth/signup", { body: { email: "ivan@example.test", password : "dummy_placeholder_secret" } });
       assert.strictEqual((await a.call("/api/mandates", { body: { id: "gina-m1", service: "Test", budgetCeiling: 5 } })).status, 201);
 
       // One user's bridge cookie with another user's refresh cookie is refused.

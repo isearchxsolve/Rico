@@ -105,7 +105,7 @@ type Scrape = { price: number; source: "live_browser" | "cache_fallback" };
   const statusFor = async (headers: Record<string, string>) => (await statusRoute.GET(get(headers))).json();
   const clearAlerts = () => (omnichannelAlertStore as unknown as { alerts: Map<string, unknown> }).alerts.clear();
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  const telegramTap = (data: string, secret = "test-telegram-secret") =>
+  const telegramTap = (data: string, secret = "dummy_placeholder_secret") =>
     webhook.POST(post({ "x-telegram-bot-api-secret-token": secret }, { callback_query: { id: "cb", data, message: { chat: { id: 12345 } } } }));
   const assertNoPayments = async () => assert.deepStrictEqual({ ...(await payments()) }, { tx: 0, captured: 0 });
 

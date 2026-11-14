@@ -29,7 +29,7 @@ async function runRegistryTests() {
     endpointUrl: "https://finops.internal.company.com/mcp",
     transport: "HTTP",
     category: "FINOPS",
-    authToken: "sk_live_finops_secret_987654321",
+    authToken : "dummy_placeholder_secret",
     mockTools: [
       {
         serverId: "finops-internal",
